@@ -1,11 +1,16 @@
-
-
 from flask import Flask, request, jsonify, abort
 from flask_sqlalchemy import SQLAlchemy
 from models.stream_key import db, StreamKey  # Import the database model
 import jwt
 from functools import wraps
 from models.user import db, User
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+import uuid
+from flask_migrate import Migrate
+import datetime
+
+
 
 def token_required(f):
     @wraps(f)
@@ -33,12 +38,33 @@ def token_required(f):
         return f(*args, **kwargs)
     return decorated
 
+
+def admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = request.headers.get('Authorization').split(" ")[1]
+        decoded = jwt.decode(token, 'your_secret_key', algorithms=['HS256'])
+        if decoded.get('role') != 'admin':
+            return jsonify({'error': 'Admin access required'}), 403
+        return f(*args, **kwargs)
+    return decorated
+
+
 app = Flask(__name__)
 app.config.from_object('config.Config')  # Load settings from config.py
 db.init_app(app)  # Initialize the database with the Flask app
 # db = SQLAlchemy(app)
 with app.app_context():
     db.create_all()
+
+
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"]
+)
+
+migrate = Migrate(app, db)
 
 
 @app.route('/')
@@ -97,7 +123,16 @@ def login():
 
     user = User.query.filter_by(username=username).first()
     if user and user.check_password(password):
-        token = jwt.encode({'username': username}, 'your_secret_key', algorithm='HS256')
+        token = jwt.encode(
+            {
+                'username': username,  # Include username in token
+                'role': user.role,  # Include the user's role in the token
+                'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)  # Set token to expire in 1 hour
+            },
+            'your_secret_key',  # Use your secret key for signing
+            algorithm='HS256'  # Algorithm for token generation
+        )
+
         print(token)
         return jsonify({'token': token}), 200
     else:
@@ -105,13 +140,58 @@ def login():
     
 
 @app.route('/secure_endpoint', methods=['GET'])
+@limiter.limit("10 per minute")  # Customize limits
 @token_required
 def secure_endpoint():
     return jsonify({'message': 'This is a secure endpoint'})
 
+@app.route('/admin_only', methods=['GET'])
+@token_required
+@admin_required
+def admin_only():
+    return jsonify({'message': 'Welcome, Admin!'})
 
+
+@app.route('/request_reset', methods=['POST'])
+def request_reset():
+    data = request.json
+    username = data.get('username')
+    user = User.query.filter_by(username=username).first()
+    if user:
+        user.reset_token = str(uuid.uuid4())  # Generate a reset token
+        db.session.commit()
+        # Send this reset_token to the user (e.g., via email)
+        return jsonify({'message': 'Reset token generated'}), 200
+    return jsonify({'error': 'User not found'}), 404
+
+@app.route('/reset_password', methods=['POST'])
+def reset_password():
+    data = request.json
+    reset_token = data.get('reset_token')
+    new_password = data.get('new_password')
+    user = User.query.filter_by(reset_token=reset_token).first()
+    if user:
+        user.set_password(new_password)
+        user.reset_token = None  # Invalidate the token
+        db.session.commit()
+        return jsonify({'message': 'Password reset successful'}), 200
+    return jsonify({'error': 'Invalid or expired reset token'}), 403
 with app.app_context():
     db.create_all()  # Create database tables if they don't exist
+
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("my_app")
+
+@app.before_request
+def log_request():
+    logger.info(f"Request: {request.method} {request.url}")
+
+@app.after_request
+def log_response(response):
+    logger.info(f"Response: {response.status_code}")
+    return response
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
