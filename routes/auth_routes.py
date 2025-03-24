@@ -1,9 +1,11 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, render_template, session
 from models.user import User, db
 import jwt
 import datetime
 
 auth_bp = Blueprint('auth', __name__)
+
+# Register GET route to render the register page
 
 @auth_bp.route('/register', methods=['POST'])
 def register():
@@ -26,6 +28,14 @@ def register():
         return jsonify({'error': 'Invalid data'}), 400
     
 
+# Login GET route to render the login page
+
+@auth_bp.route('/login', methods=['GET'])
+def render_login_page():
+    return render_template('login.html')  # Render the login.html page
+
+# Login POST route to authenticate the user
+
 @auth_bp.route('/login', methods=['POST'])
 def login():
     data = request.json
@@ -34,6 +44,9 @@ def login():
 
     user = User.query.filter_by(username=username).first()
     if user and user.check_password(password):
+        session['user_id'] = user.id  # This is required for authentication
+        session['username'] = user.username  # Optional for convenience
+
         token = jwt.encode(
             {
                 'username': username,  # Include username in token
@@ -45,6 +58,8 @@ def login():
         )
 
         print(token)
-        return jsonify({'token': token}), 200
+        return jsonify({'token': token, 'redirect_url': '/media/my_videos'}), 200
     else:
         return jsonify({'error': 'Invalid credentials'}), 401
+    
+
