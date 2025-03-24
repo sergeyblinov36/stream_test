@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <script src="/static/scripts/dashboard.js" defer></script> <!-- Link external JS -->
+</head>
+<body>
+    <h1>Welcome, {{ session['username'] }}!</h1>
+
+    <nav>
+        <a href="/media/upload"><button>Upload Video</button></a> |
+        <a href="/community">Community</a> |
+        <a href="/settings">Settings</a> |
+        <a href="/logout">Logout</a>
+    </nav>
+
+    <section>
+        <h2>Your Videos</h2>
+        <ul>
+            {% for video in videos %}
+                <li id="video-{{ video.id }}">
+                    <strong>{{ video.title or video.filename }}</strong>
+                    <button class="delete-button" data-video-id="{{ video.id }}">Delete</button>
+                </li>
+            {% endfor %}
+        </ul>
+    </section>
+</body>
+</html>

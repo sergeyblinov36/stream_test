@@ -21,6 +21,7 @@ from routes.reset_password import reset_password_bp
 from static.limiter import limiter
 from routes.media_routes import media_bp
 from routes.my_videos import my_videos_bp
+from routes.dashboard import dashboard_bp
 
 
 
@@ -51,6 +52,7 @@ app.register_blueprint(request_reset_bp)
 app.register_blueprint(reset_password_bp)
 app.register_blueprint(media_bp)
 app.register_blueprint(my_videos_bp, url_prefix='/media')
+app.register_blueprint(dashboard_bp,)
 
 
 

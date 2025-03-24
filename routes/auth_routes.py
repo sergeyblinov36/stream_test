@@ -58,7 +58,7 @@ def login():
         )
 
         print(token)
-        return jsonify({'token': token, 'redirect_url': '/media/my_videos'}), 200
+        return jsonify({'token': token, 'redirect_url': '/dashboard'}), 200
     else:
         return jsonify({'error': 'Invalid credentials'}), 401
     

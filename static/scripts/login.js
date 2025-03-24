@@ -25,7 +25,7 @@ document.getElementById('loginForm').onsubmit = async function(event) {
 
             // Redirect to another page
             setTimeout(() => {
-                window.location.href = '/media/my_videos'; // Replace with your target page
+                window.location.href = '/dashboard'; // Replace with your target page
             }, 1000);
         } else {
             // Display error message
