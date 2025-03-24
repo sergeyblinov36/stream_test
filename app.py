@@ -19,7 +19,7 @@ from routes.admin_only import admin_only_bp
 from routes.request_reset import request_reset_bp
 from routes.reset_password import reset_password_bp
 from static.limiter import limiter
-
+from routes.media_routes import media_bp
 
 
 
@@ -46,6 +46,7 @@ app.register_blueprint(secure_bp)
 app.register_blueprint(admin_only_bp)
 app.register_blueprint(request_reset_bp)
 app.register_blueprint(reset_password_bp)
+app.register_blueprint(media_bp)
 
 
 

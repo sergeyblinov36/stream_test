@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Streaming Platform</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style/styles.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Welcome to the Streaming Platform</h1>
+    </header>
+    <main>
+        <section id="upload">
+            <h2>Upload a Video</h2>
+            <form id="uploadForm" method="POST" enctype="multipart/form-data" action="/media/upload">
+                <input type="file" name="file" id="fileInput" required>
+                <button type="submit">Upload</button>
+            </form>
+        </section>
+
+            <!-- </select> -->
+        <section id="videoGallery">
+            <h2>Watch Videos</h2>
+            <div id="videosContainer">
+                <!-- Video players will be dynamically added here -->
+            </div>
+        </section>
+            
+        
+        
+    </main>
+    <script src="{{ url_for('static', filename='scripts/scripts.js') }}"></script>
+</body>
+</html>
